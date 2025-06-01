@@ -1,5 +1,5 @@
 # HighScoresData class
-from Constants import *
+from ..Constants import *
 from pathlib import Path
 import json
 

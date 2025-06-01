@@ -1,7 +1,7 @@
 # High Scores scene
 import pygwidgets
 import pyghelpers
-from HighScoresData import *
+from src.scores.HighScoresData import *
 
 def showCustomAnswerDialog(theWindow, theText):
     oDialogBackground = pygwidgets.Image(theWindow, (35, 450),

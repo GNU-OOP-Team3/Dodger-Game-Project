@@ -13,6 +13,7 @@
  4. 설치 후 `pip list` 명령어로 필수 패키지 설치 여부 확인
  5. 인터프리터 ('.venv')버전으로 되어있는지 확인.
 ![alt text](image.png)
+
 <br>
 
 ### **Activation Command**
@@ -28,5 +29,9 @@
 <br>
 
 # 게임 실행 방법 (2가지)
- - Terminal(`` Ctrl + ` ``)에 `python Main_Dodger` 또는 `python3 Main_Dodger` 입력
+ - Terminal(`` Ctrl + ` ``)에 `python Main_Dodger.py` 또는 `python3 Main_Dodger.py` 입력
  - 프로그램 실행 버튼 클릭
+
+<br>
+
+# 개인 Branch 생성 및 제작 현황 Pull Request 하기.
