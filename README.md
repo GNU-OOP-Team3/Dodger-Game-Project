@@ -30,3 +30,9 @@
 # 게임 실행 방법 (2가지)
  - Terminal(`` Ctrl + ` ``)에 `python Main_Dodger` 또는 `python3 Main_Dodger` 입력
  - 프로그램 실행 버튼 클릭
+
+
+ # timer 사용 (import)
+ 방법1
+
+ # timer 사용 (객체)
