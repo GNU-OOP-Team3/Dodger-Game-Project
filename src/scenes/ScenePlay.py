@@ -1,10 +1,12 @@
 #  Play scene - the main game play scene
-from pygame.locals import *
+# from pygame.locals import *
+
+import pygame
 import pygwidgets
 import pyghelpers
-from Player import *
-from Baddies import *
-from Goodies import *
+
+from .objects import *
+from ..Constants import *
 
 def showCustomYesNoDialog(theWindow, theText):
     oDialogBackground = pygwidgets.Image(theWindow, (40, 250),

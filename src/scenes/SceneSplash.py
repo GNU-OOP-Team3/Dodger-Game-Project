@@ -1,7 +1,7 @@
 # Splash scene - first scene the user sees
 import pygwidgets
 import pyghelpers
-from Constants import *
+from ..Constants import *
 
 class SceneSplash(pyghelpers.Scene):
     def __init__(self, window):
