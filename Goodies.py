@@ -2,6 +2,12 @@
 import pygame
 import pygwidgets
 import random
+from Constants import * # 추가
+
+# Goodie and GoddieMgr classes
+import pygame
+import pygwidgets
+import random
 from Constants import *
 
 class Goodie():
@@ -58,8 +64,9 @@ class Goodie():
 
 
 class GoodieMgr():
-    GOODIE_RATE_LO = 90
-    GOODIE_RATE_HI = 111
+    INITIAL_GOODIE_RATE_LO = 90 # 초기 최소 생성 간격
+    INITIAL_GOODIE_RATE_HI = 111 # 초기 최대 생성 간격
+    RATE_DECREMENT_PER_STAGE = 5 # 스테이지당 생성 간격 감소량
 
     def __init__(self, window):
         self.window = window
@@ -67,7 +74,10 @@ class GoodieMgr():
 
     def reset(self):  # Called when starting a new game
         self.goodiesList = []
-        self.nFramesTilNextGoodie = GoodieMgr.GOODIE_RATE_HI
+        self.current_goodie_rate_lo = GoodieMgr.INITIAL_GOODIE_RATE_LO
+        self.current_goodie_rate_hi = GoodieMgr.INITIAL_GOODIE_RATE_HI
+        self.nFramesTilNextGoodie = random.randrange(self.current_goodie_rate_lo,
+                                                     self.current_goodie_rate_hi)
 
     def update(self, thePlayerRect):
         # Tell each Goodie to update itself.
@@ -91,11 +101,23 @@ class GoodieMgr():
             oGoodie = Goodie(self.window)
             self.goodiesList.append(oGoodie)
             self.nFramesTilNextGoodie = random.randrange(
-                                                            GoodieMgr.GOODIE_RATE_LO,
-                                                            GoodieMgr.GOODIE_RATE_HI)
+                                                            self.current_goodie_rate_lo,
+                                                            self.current_goodie_rate_hi)
 
         return nGoodiesHit  # return number of Goodies that contacted player
 
     def draw(self):
         for oGoodie in self.goodiesList:
             oGoodie.draw()
+
+    def increaseFrequency(self, stage):
+        # 스테이지가 올라갈수록 굿디 생성 빈도 증가 (RATE_LO, RATE_HI 감소)
+        # 최소값을 설정하여 너무 빨라지지 않도록 합니다.
+        self.current_goodie_rate_lo = max(10, GoodieMgr.INITIAL_GOODIE_RATE_LO - (stage - 1) * GoodieMgr.RATE_DECREMENT_PER_STAGE)
+        self.current_goodie_rate_hi = max(15, GoodieMgr.INITIAL_GOODIE_RATE_HI - (stage - 1) * GoodieMgr.RATE_DECREMENT_PER_STAGE)
+        
+        # 최소값이 최대값보다 커지지 않도록 보정
+        if self.current_goodie_rate_lo > self.current_goodie_rate_hi:
+            self.current_goodie_rate_lo = self.current_goodie_rate_hi - 5 # 최소 5프레임 차이 유지 (조정 가능)
+            if self.current_goodie_rate_lo < 1: # 최소값이 1 미만이 되지 않도록
+                self.current_goodie_rate_lo = 1

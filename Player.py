@@ -1,7 +1,7 @@
 # Player
 import pygame
 import pygwidgets
-from Constants import *
+from Constants import * # 추가
 
 class Player():
     def __init__(self, window):

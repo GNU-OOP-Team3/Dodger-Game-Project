@@ -18,3 +18,8 @@ POINTS_FOR_GOODIE = 25
 POINTS_FOR_BADDIE_EVADED = 1
 HIGH_SCORES_DATA = 'high scores data'
 N_HIGH_SCORES = 10
+
+# Game states
+STATE_WAITING = 'waiting'
+STATE_PLAYING = 'playing'
+STATE_GAME_OVER = 'game over'

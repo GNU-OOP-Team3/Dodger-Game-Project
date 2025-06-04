@@ -32,7 +32,7 @@
  - 프로그램 실행 버튼 클릭
 
 
- # timer 사용 (import)
- 방법1
+ # timer 사용 case1:(import)
 
- # timer 사용 (객체)
+
+ # timer 사용 case2: (class로 time을 만들어 따로 객체를 만들어서 사용한다. )

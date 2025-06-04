@@ -1,231 +1,122 @@
-#  Play scene - the main game play scene
+# ScenePlay.py
 from pygame.locals import *
 import pygwidgets
 import pyghelpers
-from Player import *
-from Baddies import *
-from Goodies import *
-
-def showCustomYesNoDialog(theWindow, theText):
-    oDialogBackground = pygwidgets.Image(theWindow, (40, 250),
-                                            'images/dialog.png')
-    oPromptDisplayText = pygwidgets.DisplayText(theWindow, (0, 290),
-                                            theText, width=WINDOW_WIDTH,
-                                            justified='center', fontSize=36)
-
-    oYesButton = pygwidgets.CustomButton(theWindow, (320, 370),
-                                            'images/gotoHighScoresNormal.png',
-                                            over='images/gotoHighScoresOver.png',
-                                            down='images/gotoHighScoresDown.png',
-                                            disabled='images/gotoHighScoresDisabled.png')
-
-    oNoButton = pygwidgets.CustomButton(theWindow, (62, 370),
-                                            'images/noThanksNormal.png',
-                                            over='images/noThanksOver.png',
-                                            down='images/noThanksDown.png',
-                                            disabled='images/noThanksDisabled.png')
-
-    choiceAsBoolean = pyghelpers.customYesNoDialog(theWindow,
-                                            oDialogBackground, oPromptDisplayText,
-                                            oYesButton, oNoButton)
-    return choiceAsBoolean
-
-BOTTOM_RECT = (0, GAME_HEIGHT + 1, WINDOW_WIDTH,
-                                WINDOW_HEIGHT - GAME_HEIGHT)
-STATE_WAITING = 'waiting'
-STATE_PLAYING = 'playing'
-STATE_GAME_OVER = 'game over'
+from Player import Player
+from Baddies import BaddieMgr
+from Goodies import GoodieMgr
+from Constants import * # Constants import 추가
+import pygame # pygame import 추가
 
 class ScenePlay(pyghelpers.Scene):
 
     def __init__(self, window):
         self.window = window
+        self.setupUI()
+        self.setupGameObjects()
 
-        self.controlsBackground = pygwidgets.Image(self.window,
-                                        (0, GAME_HEIGHT),
-                                        'images/controlsBackground.jpg')
+        self.score = 0
+        self.playingState = STATE_WAITING # Constants에 정의된 STATE_WAITING 사용
 
-        self.quitButton = pygwidgets.CustomButton(self.window,
-                                        (30, GAME_HEIGHT + 90),
-                                        up='images/quitNormal.png',
-                                        down='images/quitDown.png',
-                                        over='images/quitOver.png',
-                                        disabled='images/quitDisabled.png')
+    def setupUI(self):
+        # UI 요소 초기화 (Constants 값 사용)
+        self.scoreText = pygwidgets.DisplayText(self.window, (WINDOW_WIDTH - 150, 10),
+                                                'Score: 0', fontSize=30, textColor=WHITE)
+        self.newGameButton = pygwidgets.CustomButton(self.window, (250, 500),
+                                                up='images/startNormal.png',
+                                                down='images/startDown.png',
+                                                over='images/startOver.png',
+                                                disabled='images/startDisabled.png')
+        self.highScoresButton = pygwidgets.CustomButton(self.window, (360, 650),
+                                                up='images/gotoHighScoresNormal.png',
+                                                down='images/gotoHighScoresDown.png',
+                                                over='images/gotoHighScoresOver.png',
+                                                disabled='images/gotoHighScoresDisabled.png')
+        self.soundCheckBox = pygwidgets.CustomCheckBox(self.window, (10, 10),
+                                                     value=True,
+                                                     on='images/checkBoxOn.png',
+                                                     off='images/checkBoxOff.png')
+        self.soundText = pygwidgets.DisplayText(self.window, (40, 10), 'Sound On', fontSize=24, textColor=WHITE)
 
-        self.highScoresButton = pygwidgets.CustomButton(self.window,
-                                        (190, GAME_HEIGHT + 90),
-                                        up='images/gotoHighScoresNormal.png',
-                                        down='images/gotoHighScoresDown.png',
-                                        over='images/gotoHighScoresOver.png',
-                                        disabled='images/gotoHighScoresDisabled.png')
+        self.quitButton = pygwidgets.CustomButton(self.window, (30, 650),
+                                                up='images/quitNormal.png',
+                                                down='images/quitDown.png',
+                                                over='images/quitOver.png',
+                                                disabled='images/quitDisabled.png')
 
-        self.newGameButton = pygwidgets.CustomButton(self.window,
-                                        (450, GAME_HEIGHT + 90),
-                                        up='images/startNewNormal.png',
-                                        down='images/startNewDown.png',
-                                        over='images/startNewOver.png',
-                                        disabled='images/startNewDisabled.png',
-                                        enterToActivate=True)
+        # 사운드 로드 (경로가 올바른지 확인)
+        pygame.mixer.music.load('sounds/background.mp3')
+        self.gameOverSound = pygame.mixer.Sound('sounds/gameOver.wav')
 
-        self.soundCheckBox = pygwidgets.TextCheckBox(self.window,
-                                        (430, GAME_HEIGHT + 17),
-                                        'Background music',
-                                        True, textColor=WHITE)
 
-        self.gameOverImage = pygwidgets.Image(self.window, (140, 180),
-                                        'images/gameOver.png')
-
-        self.titleText = pygwidgets.DisplayText(self.window,
-                                        (70, GAME_HEIGHT + 17),
-                                        'Score:                                 High Score:',
-                                        fontSize=24, textColor=WHITE)
-
-        self.scoreText = pygwidgets.DisplayText(self.window,
-                                        (80, GAME_HEIGHT + 47), '0',
-                                        fontSize=36, textColor=WHITE,
-                                        justified='right')
-
-        self.highScoreText = pygwidgets.DisplayText(self.window,
-                                        (270, GAME_HEIGHT + 47), '',
-                                        fontSize=36, textColor=WHITE,
-                                        justified='right')
-
-        pygame.mixer.music.load('sounds/background.mid')
-        self.dingSound = pygame.mixer.Sound('sounds/ding.wav')
-        self.gameOverSound = pygame.mixer.Sound('sounds/gameover.wav')
-
-        # Instantiate objects
+    def setupGameObjects(self):
         self.oPlayer = Player(self.window)
         self.oBaddieMgr = BaddieMgr(self.window)
         self.oGoodieMgr = GoodieMgr(self.window)
 
-        self.highestHighScore = 0
-        self.lowestHighScore = 0
-        self.backgroundMusic = True
+    def reset(self):
         self.score = 0
-        self.playingState = STATE_WAITING
-
-    def getSceneKey(self):
-        return SCENE_PLAY
-
-    def enter(self, data):
-        self.getHiAndLowScores()
-
-    def getHiAndLowScores(self):
-        # Ask the High Scores scene for a dict of  scores
-        # that looks like this:
-        #  {'highest': highestScore, 'lowest': lowestScore}
-        infoDict = self.request(SCENE_HIGH_SCORES, HIGH_SCORES_DATA)
-        self.highestHighScore = infoDict['highest']
-        self.highScoreText.setValue(self.highestHighScore)
-        self.lowestHighScore = infoDict['lowest']
-
-    def reset(self):   # start a new game
-        self.score = 0
-        self.scoreText.setValue(self.score)
-        self.getHiAndLowScores()
-
-        # Tell the managers to reset themselves
+        self.scoreText.setValue('Score: ' + str(self.score)) # setValue는 문자열을 받음
         self.oBaddieMgr.reset()
         self.oGoodieMgr.reset()
+        pygame.mixer.music.play(-1, 0.0) # Reset 시 음악 재생 시작
 
-        if self.backgroundMusic:
-            pygame.mixer.music.play(-1, 0.0)
+    def getSceneKey(self):
+        return SCENE_PLAY # 상수 SCENE_PLAY 사용
+
+    def enter(self, data):
+        self.reset() # 씬 진입 시 게임 리셋
+        pygame.mouse.set_visible(False) # 게임 플레이 중 마우스 숨기기
+        # 게임 시작 시 버튼 비활성화 (ScenePlay에서 실제 게임이 시작되기 전까지)
         self.newGameButton.disable()
         self.highScoresButton.disable()
         self.soundCheckBox.disable()
         self.quitButton.disable()
-        pygame.mouse.set_visible(False)
+        pygame.mixer.music.play(-1, 0.0) # 씬 진입 시 음악 재생 시작
 
-    def handleInputs(self, eventsList, keyPressedList):
-        if self.playingState == STATE_PLAYING:
-            return  # ignore button events while playing
 
-        for event in eventsList:
+    def handleInputs(self, events, keyPressedList):
+        # inputs 처리 로직 추가
+        for event in events:
             if self.newGameButton.handleEvent(event):
                 self.reset()
                 self.playingState = STATE_PLAYING
+                pygame.mouse.set_visible(False)
+                pygame.mixer.music.play(-1, 0.0)
+                self.newGameButton.disable()
+                self.highScoresButton.disable()
+                self.soundCheckBox.disable()
+                self.quitButton.disable()
 
-            if self.highScoresButton.handleEvent(event):
+            elif self.highScoresButton.handleEvent(event):
                 self.goToScene(SCENE_HIGH_SCORES)
-
-            if self.soundCheckBox.handleEvent(event):
-                self.backgroundMusic = self.soundCheckBox.getValue()
-
-            if self.quitButton.handleEvent(event):
+            elif self.soundCheckBox.handleEvent(event):
+                if self.soundCheckBox.getValue():
+                    pygame.mixer.music.set_volume(1.0)
+                else:
+                    pygame.mixer.music.set_volume(0.0)
+            elif self.quitButton.handleEvent(event):
                 self.quit()
 
     def update(self):
         if self.playingState != STATE_PLAYING:
-            return  # only update when playing
+            return
+        self.updateGameplay()
 
-        # Move the Player to the mouse position, get back its rect
-        mouseX, mouseY = pygame.mouse.get_pos()
-        playerRect = self.oPlayer.update(mouseX, mouseY)
+    def updateGameplay(self):
+        # 이 메서드는 ScenePlayStage 또는 ScenePlaySurvival에서 오버라이드 됨
+        raise NotImplementedError("이 메서드는 자식 클래스에서 override 해야 합니다.")
 
-        # Tell the GoodieMgr to move all Goodies
-        # Returns the number of Goodies that the Player contacted
-        nGoodiesHit = self.oGoodieMgr.update(playerRect)
-        if nGoodiesHit > 0:
-            self.dingSound.play()
-            self.score = self.score + (nGoodiesHit * POINTS_FOR_GOODIE)
-
-        # Tell the BaddieMgr to move all the Baddies
-        # Returns the number of Baddies that fell off the bottom
-        nBaddiesEvaded  = self.oBaddieMgr.update()
-        self.score = self.score + (nBaddiesEvaded * POINTS_FOR_BADDIE_EVADED)
-        
-        self.scoreText.setValue(self.score)
-
-        # Check if the Player has hit any Baddie
-        if self.oBaddieMgr.hasPlayerHitBaddie(playerRect):
-            pygame.mouse.set_visible(True)
-            pygame.mixer.music.stop()
-
-            self.gameOverSound.play()
-            self.playingState = STATE_GAME_OVER
-            self.draw()  # force drawing of game over message
-
-            if self.score > self.lowestHighScore:
-                scoreString = 'Your score: ' + str(self.score) + '\n'
-                if self.score > self.highestHighScore:
-                    dialogText = (scoreString +
-                                       'is a new high score, CONGRATULATIONS!')
-                else:
-                    dialogText = (scoreString +
-                                      'gets you on the high scores list.')
-
-                result = showCustomYesNoDialog(self.window, dialogText)
-                if result: # navigate
-                    self.goToScene(SCENE_HIGH_SCORES, self.score)  
-
-            self.newGameButton.enable()
-            self.highScoresButton.enable()
-            self.soundCheckBox.enable()
-            self.quitButton.enable()
-    
     def draw(self):
-        self.window.fill(BLACK)
-    
-        # Tell the managers to draw all the Baddies and Goodies
+        # 화면 그리기 로직 추가
+        self.window.fill(BLACK) # 배경색 채우기 (Constants에 BLACK 정의)
+        self.oPlayer.draw()
         self.oBaddieMgr.draw()
         self.oGoodieMgr.draw()
-    
-        # Tell the Player to draw itself
-        self.oPlayer.draw()
-    
-        # Draw all the info at the bottom of the window
-        self.controlsBackground.draw()
-        self.titleText.draw()
         self.scoreText.draw()
-        self.highScoreText.draw()
-        self.soundCheckBox.draw()
-        self.quitButton.draw()
-        self.highScoresButton.draw()
-        self.newGameButton.draw()
-
         if self.playingState == STATE_GAME_OVER:
-            self.gameOverImage.draw()
-
-    def leave(self):
-        pygame.mixer.music.stop()
+            # 게임 오버 시 버튼들 그리기
+            self.newGameButton.draw()
+            self.highScoresButton.draw()
+            self.soundCheckBox.draw()
+            self.quitButton.draw()
