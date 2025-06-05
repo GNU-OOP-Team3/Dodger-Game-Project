@@ -14,6 +14,7 @@ import pygame
 import pyghelpers
 from SceneSplash import *
 # from ScenePlay import * # ScenePlay는 직접 사용하지 않으므로 주석 처리 또는 삭제
+from ScenePlaySurvival import ScenePlaySurvival # ScenePlaySurvival 임포트 추가
 from ScenePlayStage import ScenePlayStage # ScenePlayStage를 임포트
 from SceneHighScores import *
 from Constants import * # 추가 (WINDOW_WIDTH, WINDOW_HEIGHT 사용)
@@ -35,8 +36,9 @@ window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 # 5 - Initialize variables
 # Instantiate all scenes and store them in a list
 scenesList = [SceneSplash(window),
-                    SceneHighScores(window),
-                    ScenePlayStage(window)] # ScenePlayStage를 사용
+                    SceneHighScores(window), 
+                    ScenePlayStage(window),      # 스테이지 모드 씬
+              ScenePlaySurvival(window)] # ScenePlayStage를 사용
 
 # Create the scene manager, passing in the scenes list and the FPS
 oSceneMgr = pyghelpers.SceneMgr(scenesList, FRAMES_PER_SECOND)

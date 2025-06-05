@@ -1,4 +1,5 @@
 # ScenePlay.py
+import os
 from pygame.locals import *
 import pygwidgets
 import pyghelpers
@@ -43,6 +44,22 @@ class ScenePlay(pyghelpers.Scene):
                                                 down='images/quitDown.png',
                                                 over='images/quitOver.png',
                                                 disabled='images/quitDisabled.png')
+        
+        
+        self.dialogPromptText = pygwidgets.DisplayText(self.window, (0, 0), '',
+                                                  fontSize=30, textColor=BLACK,
+                                                  justified='center') # 텍스트 내용은 나중에 설정
+        
+        BUTTON_WIDTH=150
+        BUTTON_HIGHT=50
+        self.dialogYesButton = pygwidgets.CustomButton(self.window, (0, 0),
+                                                   up='images/yesNormal.png',
+                                                   down='images/yesDown.png',
+                                                   over='images/yesOver.png') # 'yesNormal.png' 등 이미지 필요
+        self.dialogNoButton = pygwidgets.CustomButton(self.window, (0, 0),
+                                                  up='images/noNormal.png',
+                                                  down='images/noDown.png',
+                                                  over='images/noOver.png') # 'noNormal.png' 등 이미지 필요
 
         # 사운드 로드 (경로가 올바른지 확인)
         pygame.mixer.music.load('sounds/background.mp3')

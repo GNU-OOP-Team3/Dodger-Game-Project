@@ -1,3 +1,4 @@
+# Timer.py
 import time
 
 class Timer:
@@ -7,6 +8,7 @@ class Timer:
         self.callBack = callBack
         self.savedSecondsElapsed = 0.0
         self.running = False
+        self.startTime = 0.0 # startTime 초기화 추가
 
     def start(self, newTimeSeconds=None):
         if newTimeSeconds is not None:
@@ -34,3 +36,6 @@ class Timer:
     def stop(self):
         self.getTime()
         self.running = False
+
+    def isRunning(self): # 이 메서드 추가
+        return self.running
