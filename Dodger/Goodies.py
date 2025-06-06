@@ -32,7 +32,7 @@ class Goodie():
 
         self.image = pygwidgets.Image(self.window,
                                                      (self.x, self.y), Goodie.GOODIE_IMAGE)
-        percent = int((size) / Goodie.MAX_SIZE)
+        percent = int((size*100) / Goodie.MAX_SIZE)
         self.image.scale(percent, False)
 
     def update(self):
