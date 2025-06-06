@@ -1,4 +1,4 @@
-#  Dodger main program
+##  Dodger main program
 #
 # Instantiates 3 scenes, creates and starts the scene manager
 #
@@ -13,8 +13,11 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 import pygame
 import pyghelpers
 from SceneSplash import *
-from ScenePlay import *
+# from ScenePlay import * # ScenePlay는 직접 사용하지 않으므로 주석 처리 또는 삭제
+from ScenePlaySurvival import ScenePlaySurvival # ScenePlaySurvival 임포트 추가
+from ScenePlayStage import ScenePlayStage # ScenePlayStage를 임포트
 from SceneHighScores import *
+from Constants import * # 추가 (WINDOW_WIDTH, WINDOW_HEIGHT 사용)
 
 # 2 - Define constants
 FRAMES_PER_SECOND = 40
@@ -24,12 +27,18 @@ pygame.init()
 window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 
 # 4 - Load assets: image(s), sounds,  etc.
+# Make sure 'images/' and 'sounds/' directories exist and contain the required files.
+# e.g., images/splashBackground.jpg, images/dodger.png, images/startNormal.png,
+# images/quitNormal.png, images/gotoHighScoresNormal.png, images/player.png,
+# images/baddie.png, images/goodie.png, sounds/background.mp3, sounds/gameOver.wav
+
 
 # 5 - Initialize variables
 # Instantiate all scenes and store them in a list
 scenesList = [SceneSplash(window),
-                    SceneHighScores(window),
-                    ScenePlay(window)]
+                    SceneHighScores(window), 
+                    ScenePlayStage(window),      # 스테이지 모드 씬
+              ScenePlaySurvival(window)] # ScenePlayStage를 사용
 
 # Create the scene manager, passing in the scenes list and the FPS
 oSceneMgr = pyghelpers.SceneMgr(scenesList, FRAMES_PER_SECOND)

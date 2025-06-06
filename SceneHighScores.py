@@ -2,6 +2,7 @@
 import pygwidgets
 import pyghelpers
 from HighScoresData import *
+from Constants import*
 
 def showCustomAnswerDialog(theWindow, theText):
     oDialogBackground = pygwidgets.Image(theWindow, (35, 450),
