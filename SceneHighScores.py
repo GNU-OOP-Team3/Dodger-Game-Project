@@ -1,156 +1,93 @@
-# High Scores scene
+# SceneHighScores.py
+
+import pygame
 import pygwidgets
 import pyghelpers
-from HighScoresData import *
-from Constants import*
-
-def showCustomAnswerDialog(theWindow, theText):
-    oDialogBackground = pygwidgets.Image(theWindow, (35, 450),
-                                                'images/dialog.png')
-    oPromptDisplayText = pygwidgets.DisplayText(theWindow, (0, 480),
-                                                theText, width=WINDOW_WIDTH,
-                                                justified='center', fontSize=36)
-    oUserInputText = pygwidgets.InputText(theWindow, (200, 550), '',
-                                                fontSize=36, initialFocus=True)
-    oNoButton = pygwidgets.CustomButton(theWindow, (65, 595),
-                                                'images/noThanksNormal.png',
-                                                over='images/noThanksOver.png',
-                                                down='images/noThanksDown.png',
-                                                disabled='images/noThanksDisabled.png')
-    oYesButton = pygwidgets.CustomButton(theWindow, (330, 595),
-                                                'images/addNormal.png',
-                                                over='images/addOver.png',
-                                                down='images/addDown.png',
-                                                disabled='images/addDisabled.png')
-    userAnswer = pyghelpers.customAnswerDialog(theWindow,
-                                                oDialogBackground,
-                                                oPromptDisplayText, oUserInputText,
-                                                oYesButton, oNoButton)
-    return userAnswer
-
-def showCustomResetDialog(theWindow, theText):
-    oDialogBackground = pygwidgets.Image(theWindow,
-                                               (35, 450), 'images/dialog.png')
-    oPromptDisplayText = pygwidgets.DisplayText(theWindow, (0, 480),
-                                                theText, width=WINDOW_WIDTH,
-                                                justified='center', fontSize=36)
-    oNoButton = pygwidgets.CustomButton(theWindow, (65, 595),
-                                                'images/cancelNormal.png',
-                                                over='images/cancelOver.png',
-                                                down='images/cancelDown.png',
-                                                disabled='images/cancelDisabled.png')
-    oYesButton = pygwidgets.CustomButton(theWindow, (330, 595),
-                                                'images/okNormal.png',
-                                                over='images/okOver.png',
-                                                down='images/okDown.png',
-                                                disabled='images/okDisabled.png')
-    choiceAsBoolean = pyghelpers.customYesNoDialog(theWindow,
-                                                oDialogBackground, oPromptDisplayText,
-                                                oYesButton, oNoButton)
-    return choiceAsBoolean
-
+import json # JSON 파일 처리를 위해 임포트
+from Constants import (WINDOW_WIDTH, WINDOW_HEIGHT, BLACK, WHITE, FONT_NAME,
+                        HIGH_SCORES_DATA, HIGH_SCORES_TO_SAVE,
+                        SCENE_SPLASH, SCENE_HIGH_SCORES) # K_SCENE_SPLASH 대신 SCENE_SPLASH로 변경
 
 class SceneHighScores(pyghelpers.Scene):
     def __init__(self, window):
         self.window = window
-        self.oHighScoresData = HighScoresData()
+
+        self.scores = [] # 최고 점수 리스트
+        self.loadHighScores() # 파일에서 최고 점수 로드
+
+        # UI 요소
+        self.titleText = pygwidgets.DisplayText(self.window, (0, 50), 'HIGH SCORES',
+                                               fontSize=60, textColor=WHITE, justified='center', width=WINDOW_WIDTH)
+        self.scoreListText = pygwidgets.DisplayText(self.window, (0, 150), '', # 점수 목록 표시
+                                                   fontSize=36, textColor=WHITE, justified='center', width=WINDOW_WIDTH)
         
-        self.backgroundImage = pygwidgets.Image(self.window,
-                                                (0, 0),
-                                                'images/highScoresBackground.jpg')
-
-        self.namesField = pygwidgets.DisplayText(self.window, (260, 84), '',
-                                                   fontSize=48, textColor=BLACK,
-                                                   width=300, justified='left')
-        self.scoresField = pygwidgets.DisplayText(self.window,
-                                                  (25, 84), '', fontSize=48,
-                                                  textColor=BLACK,
-                                                  width=175, justified='right')
-
-        self.quitButton = pygwidgets.CustomButton(self.window,
-                                                  (30, 650),
-                                                  up='images/quitNormal.png',
-                                                  down='images/quitDown.png',
-                                                  over='images/quitOver.png',
-                                                  disabled='images/quitDisabled.png')
-
-        self.backButton = pygwidgets.CustomButton(self.window,
-                                                 (240, 650),
-                                                 up='images/backNormal.png',
-                                                 down='images/backDown.png',
-                                                 over='images/backOver.png',
-                                                 disabled='images/backDisabled.png')
-
-        self.resetScoresButton = pygwidgets.CustomButton(self.window,
-                                                 (450, 650),
-                                                 up='images/resetNormal.png',
-                                                 down='images/resetDown.png',
-                                                 over='images/resetOver.png',
-                                                 disabled='images/resetDisabled.png')
-
-        self.showHighScores()
+        self.instructionsText = pygwidgets.DisplayText(self.window, (0, WINDOW_HEIGHT - 60),
+                                                    'Click anywhere to return to the Main Menu',
+                                                    fontSize=28, textColor=WHITE, justified='center', width=WINDOW_WIDTH)
+        
+        self.updateScoreListDisplay() # 점수 목록 UI 업데이트
 
     def getSceneKey(self):
-        return SCENE_HIGH_SCORES
+        return SCENE_HIGH_SCORES # 변경 없음
 
-    def enter(self, newHighScoreValue=None):
-        # This can be called two different ways:
-        # 1. If no new high score, newHighScoreValue will be None
-        # 2. newHighScoreValue is score of the current game - in top 10
-        if newHighScoreValue is None:
-            return  # nothing to do
-
-        self.draw() # draw before showing dialog
-        # We have a new high score sent in from the Play scene
-        dialogQuestion = ('To record your score of ' +
-                                 str(newHighScoreValue) + ',\n' +
-                                 'please enter your name:')
-        playerName = showCustomAnswerDialog(self.window,
-                                                                    dialogQuestion)
-        if playerName is None:
-            return  # user pressed Cancel
-
-        # Add user and score to high scores
-        if playerName == '':
-            playerName = 'Anonymous'
-        self.oHighScoresData.addHighScore(playerName,
-                                                            newHighScoreValue)
-
-        # Show the updated high scores table
-        self.showHighScores()
-
-    def showHighScores(self):
-        # Get the scores and names, show them in two fields
-        scoresList, namesList = self.oHighScoresData.getScoresAndNames()
-        self.namesField.setValue(namesList)
-        self.scoresField.setValue(scoresList)        
+    def enter(self, data):
+        # 씬 진입 시 데이터 확인 및 최고 점수 업데이트
+        if 'score' in data: # 새로운 점수가 있다면
+            newScore = data['score']
+            self.addHighScore(newScore)
+            self.updateScoreListDisplay()
 
     def handleInputs(self, eventsList, keyPressedList):
         for event in eventsList:
-            if self.quitButton.handleEvent(event):
+            if event.type == QUIT:
                 self.quit()
+            elif event.type == MOUSEBUTTONDOWN:
+                self.goToScene(SCENE_SPLASH) # SCENE_SPLASH로 돌아감
 
-            elif self.backButton.handleEvent(event):
-                self.goToScene(SCENE_PLAY)
-
-            elif self.resetScoresButton.handleEvent(event):
-                confirmed = showCustomResetDialog(self.window,
-                                        'Are you sure you want to \nRESET the high scores?')
-                if confirmed:
-                    self.oHighScoresData.resetScores()
-                    self.showHighScores()
+    def update(self):
+        pass # 특별한 애니메이션이나 게임 로직 없음
 
     def draw(self):
-        self.backgroundImage.draw()
-        self.scoresField.draw()
-        self.namesField.draw()
-        self.quitButton.draw()
-        self.resetScoresButton.draw()
-        self.backButton.draw()
+        self.window.fill(BLACK)
+        self.titleText.draw()
+        self.scoreListText.draw()
+        self.instructionsText.draw()
 
-    def respond(self, requestID):
-        if requestID == HIGH_SCORES_DATA:
-            # Request from Play scene for the highest and lowest scores
-            # Build a dictionary and return it to the Play scene
-            highestScore, lowestScore = self.oHighScoresData.getHighestAndLowest()
-            return {'highest':highestScore, 'lowest':lowestScore}
+    def loadHighScores(self):
+        """파일에서 최고 점수를 로드합니다."""
+        try:
+            with open(HIGH_SCORES_DATA, 'r') as file:
+                self.scores = json.load(file)
+        except FileNotFoundError:
+            self.scores = [] # 파일이 없으면 빈 리스트로 시작
+        except json.JSONDecodeError:
+            self.scores = [] # JSON 디코딩 오류 시 빈 리스트로 시작 (파일이 비어있거나 손상된 경우)
+
+    def saveHighScores(self):
+        """최고 점수를 파일에 저장합니다."""
+        with open(HIGH_SCORES_DATA, 'w') as file:
+            json.dump(self.scores, file)
+
+    def addHighScore(self, newScore):
+        """새로운 점수를 최고 점수 목록에 추가하고 정렬합니다."""
+        if isinstance(newScore, dict) and 'score' in newScore and 'name' in newScore:
+            self.scores.append(newScore)
+        else: # 이름이 없는 경우 (예: 게임 오버 시 바로 넘어온 점수)
+            # 이름을 입력받는 다이얼로그를 사용할 수도 있지만, 여기서는 단순히 'Player'로 추가
+            self.scores.append({'name': 'Player', 'score': newScore})
+            # 또는 pyghelpers.customInputDialog를 사용하여 이름을 입력받을 수 있음
+
+        self.scores.sort(key=lambda item: item['score'], reverse=True) # 점수를 내림차순 정렬
+        self.scores = self.scores[:HIGH_SCORES_TO_SAVE] # 저장할 개수만큼만 유지
+        self.saveHighScores()
+
+    def updateScoreListDisplay(self):
+        """UI에 표시될 점수 목록 텍스트를 업데이트합니다."""
+        displayScores = []
+        for i, entry in enumerate(self.scores):
+            displayScores.append(f'{i+1}. {entry["name"]}: {entry["score"]}')
+        
+        if not displayScores:
+            self.scoreListText.setText('No high scores yet!')
+        else:
+            self.scoreListText.setText('\n'.join(displayScores))

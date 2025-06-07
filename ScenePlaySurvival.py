@@ -1,74 +1,88 @@
 # ScenePlaySurvival.py
-
-from ScenePlay import ScenePlay
-from Timer import Timer
 import pygame
-from Constants import *
+import pygwidgets
 import pyghelpers
+from Constants import (SCENE_PLAY_SURVIVAL, SCENE_HIGH_SCORES, 
+                        PLAYER_START_X, PLAYER_START_Y, # Player 초기 위치 사용 (Constants.py에 정의 필요)
+                        BADDY_POINTS, GOODIE_POINTS, BADDY_SPEED_MULTIPLIER,
+                        BADDY_SPAWN_INTERVAL, GOODIE_SPAWN_INTERVAL,
+                        STATE_PLAYING) # STATE_PLAYING 추가 (updateGameplay에서 사용)
+from ScenePlay import ScenePlay # ScenePlay를 상속받음
+# import pygame.mixer # 사운드 제거로 인해 주석 처리 또는 제거
 
 class ScenePlaySurvival(ScenePlay):
-    SURVIVAL_TIME = 30 # 생존 목표 시간 (기본값)
-    SCORE_PER_SECOND = 10 # 1초당 얻는 점수
-    POINTS_FOR_GOODIE_SURVIVAL = 50 # 서바이벌 모드에서 Goodie 획득 시 추가 점수
-
     def __init__(self, window):
-        super().__init__(window)
-        self.survivalTimer = Timer(self.SURVIVAL_TIME, "survival", self.timerFinished)
+        super().__init__(window) # 부모 클래스 ScenePlay의 생성자 호출
+        self.baddySpeedMultiplier = BADDY_SPEED_MULTIPLIER['normal'] # 서바이벌은 기본 난이도 고정
+        self.baddySpawnInterval = BADDY_SPAWN_INTERVAL['normal']
+        self.goodieSpawnInterval = GOODIE_SPAWN_INTERVAL['normal']
+        self.scoreMultiplier = 1 # 서바이벌 모드는 시간 대신 점수 배율이 증가할 수 있음
 
-    def reset(self):
-        super().reset()
-        self.survivalTimer.start()
-        self.playingState = STATE_WAITING
-        # 서바이벌 모드에서는 난이도 증가 로직을 초기화하지 않음 (스테이지 모드와 분리)
-        # 필요하다면 BaddieMgr와 GoodieMgr의 난이도를 기본값으로 설정
+        self.lastBaddySpawnTime = pygame.time.get_ticks()
+        self.lastGoodieSpawnTime = pygame.time.get_ticks()
+
+    def getSceneKey(self):
+        return SCENE_PLAY_SURVIVAL
+
+    # enter 메서드는 부모 클래스의 것을 그대로 사용해도 무방
+    # def enter(self, data):
+    #     super().enter(data)
 
     def updateGameplay(self):
+        # 마우스 현재 위치 가져오기
         mouseX, mouseY = pygame.mouse.get_pos()
-        playerRect = self.oPlayer.update(mouseX, mouseY)
+        # 플레이어 위치 업데이트 (마우스 위치 전달)
+        playerRect = self.oPlayer.update(mouseX, mouseY) # <-- 이 줄을 이렇게 수정합니다.
+
+        # Baddy 생성 로직
+        currentTime = pygame.time.get_ticks()
+        if currentTime - self.lastBaddySpawnTime > self.baddySpawnInterval:
+            self.oBaddieMgr.addBaddy(self.baddySpeedMultiplier)
+            self.lastBaddySpawnTime = currentTime
+
+        # Goodie 생성 로직
+        if currentTime - self.lastGoodieSpawnTime > self.goodieSpawnInterval:
+            self.oGoodieMgr.addGoodie()
+            self.lastGoodieSpawnTime = currentTime
+
+        # 충돌 감지
+        baddiesHit = self.oBaddieMgr.update(playerRect)
+        if baddiesHit > 0:
+            self.score -= baddiesHit * BADDY_POINTS # 점수 감소
+            # 충돌 발생 시 게임 오버
+            self.endGame()
         
-        # Goodie 획득 시 점수 추가
-        nGoodiesHit = self.oGoodieMgr.update(playerRect)
-        if nGoodiesHit > 0:
-            self.score += nGoodiesHit * self.POINTS_FOR_GOODIE_SURVIVAL # 서바이벌 모드 점수
+        goodiesHit = self.oGoodieMgr.update(playerRect)
+        if goodiesHit > 0:
+            self.score += goodiesHit * GOODIE_POINTS # 점수 증가 (사운드 제거)
+            # if self.isSoundOn: # 사운드 제거
+            #    self.goodieSound.play()
 
-        # Baddie 피할 때 점수 추가 (기존 로직 유지)
-        self.score += self.oBaddieMgr.update() * POINTS_FOR_BADDIE_EVADED # POINTS_FOR_BADDIE_EVADED 사용
-
-        # 시간 기반 점수 추가
-        # 매 프레임마다 시간을 확인하여 점수를 업데이트
-        # 타이머가 멈추지 않았다면 경과 시간에 비례하여 점수 증가
-        if self.survivalTimer.isRunning(): # Timer 클래스에 isRunning() 메서드 추가 필요
-            self.score = int(self.survivalTimer.getTime() * self.SCORE_PER_SECOND)
-
+        # 점수 업데이트
         self.scoreText.setValue(f'Score: {self.score}')
 
-        if self.oBaddieMgr.hasPlayerHitBaddie(playerRect):
-            self.endGame(False) # 생존 실패
+        # 서바이벌 모드에서는 시간이 지남에 따라 난이도 증가 또는 점수 증가 로직을 추가할 수 있습니다.
+        # (현재는 구현되어 있지 않음)
 
-        if self.survivalTimer.update(): # 타이머가 완료되면
-            self.endGame(True) # 생존 성공
+    def reset(self):
+        super().reset() # 부모 클래스의 reset 메서드 호출
+        # self.startTime = pygame.time.get_ticks() # 서바이벌 모드에서는 게임 시간 기록 필요 없음
 
-    def timerFinished(self, nickname):
-        # 타이머가 완료되었을 때 호출되는 콜백 (현재는 비어있음)
-        pass
+    def endGame(self):
+        # pygame.mixer.music.stop() # 사운드 제거
+        # if self.isSoundOn: # 사운드 제거
+        #    self.gameOverSound.play()
+        self.playingState = STATE_GAME_OVER # 게임 오버 상태로 전환
+        finalScore = self.score
 
-    def endGame(self, survived):
-        pygame.mouse.set_visible(True)
-        pygame.mixer.music.stop()
-        self.gameOverSound.play()
-        self.playingState = STATE_GAME_OVER
-        # self.draw() # pyghelpers의 drawCycle에 의해 처리됨.
-
-        dialogText = f"You survived for {int(self.survivalTimer.getTime())} seconds! Your score is {self.score}. Play again?" if survived \
-                     else f"You failed! Your score is {self.score}. Play again?"
-        self.dialogPromptText.setValue(dialogText) # ScenePlay에서 상속받은 dialogPromptText 사용
-
-        result = pyghelpers.customYesNoDialog(self.window,
-                                              self.dialogPromptText,
-                                              self.dialogYesButton,
-                                              self.dialogNoButton)
-
-        if result == 'Yes': # 다시 시작
-            self.reset()
-        else: # 하이 스코어 또는 종료
-            self.goToScene(SCENE_HIGH_SCORES)
+        prompt = f'Game Over! Final Score: {finalScore}\nDo you want to play again?'
+        self.dialogPromptText.setValue(prompt)
+        # pyghelpers.customYesNoDialog 호출 시 버튼은 별도로 인스턴스화하지 않습니다.
+        result = self.oSceneMgr.showCustomYesNoDialog(self.dialogPromptText, 
+                                                     yesButtonText='Yes, please!', 
+                                                     noButtonText='No, thanks.')
+        
+        if result == 'Yes': # DIALOG_YES 대신 직접 문자열 'Yes' 사용
+            self.goToScene(SCENE_PLAY_SURVIVAL) # 서바이벌은 난이도 선택 없이 바로 시작
+        else: # DIALOG_NO 대신 직접 문자열 'No' 사용
+            self.goToScene(SCENE_HIGH_SCORES, {'score': finalScore})
