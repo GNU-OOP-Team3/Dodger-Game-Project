@@ -1,4 +1,4 @@
-# Baddie and BaddieMgr classes
+# Baddie and BaddieMgr classes JSP
 
 import pygame
 import pygwidgets
@@ -12,25 +12,23 @@ class Baddie():
     MIN_SPEED = 1
     MAX_SPEED = 8
     # Load the image only once
-    BADDIE_IMAGE = pygame.image.load(f'{RESOURCES_PATH}/images/baddie.png')
+    BADDIE_IMAGE = pygame.image.load(f'{RESOURCES_PATH}/images/fGrade.png')
 
     def __init__(self, window):
         self.window = window
         # Create the image object
         size = random.randrange(Baddie.MIN_SIZE, Baddie.MAX_SIZE + 1)
         self.x = random.randrange(0, WINDOW_WIDTH - size)
-        self.y = 0 - size # start above the window
-        self.image = pygwidgets.Image(self.window, (self.x, self.y),
-                                      Baddie.BADDIE_IMAGE)
+        self.y = 0 - size  # start above the window
+        self.image = pygwidgets.Image(self.window, (self.x, self.y), Baddie.BADDIE_IMAGE)
 
         # Scale it
         percent = (size * 100) / Baddie.MAX_SIZE
         self.image.scale(percent, False)
-        self.speed = random.randrange(Baddie.MIN_SPEED,
-                                                      Baddie.MAX_SPEED + 1)
+        self.speed = random.randrange(Baddie.MIN_SPEED, Baddie.MAX_SPEED + 1)
 
-    def update(self):  # move the Baddie down
-        self.y = self.y + self.speed
+    def update(self, scale=1.0):  # move the Baddie down
+        self.y += self.speed * scale
         self.image.setLoc((self.x, self.y))
         if self.y > GAME_HEIGHT:
             return True  # needs to be deleted
@@ -41,8 +39,7 @@ class Baddie():
         self.image.draw()
 
     def collide(self, playerRect):
-        collidedWithPlayer = self.image.overlaps(playerRect)
-        return collidedWithPlayer
+        return self.image.overlaps(playerRect)
 
 # BaddieMgr class
 class BaddieMgr():
@@ -56,25 +53,22 @@ class BaddieMgr():
         self.baddiesList = []
         self.nFramesTilNextBaddie = BaddieMgr.ADD_NEW_BADDIE_RATE
 
-    def update(self):
-        # Tell each Baddie to update itself
-        # Count how many Baddies have fallen off the bottom.
+    def update(self, scale=1.0):
         nBaddiesRemoved = 0
         baddiesListCopy = self.baddiesList.copy()
         for oBaddie in baddiesListCopy:
-            deleteMe = oBaddie.update()
+            deleteMe = oBaddie.update(scale)
             if deleteMe:
                 self.baddiesList.remove(oBaddie)
-                nBaddiesRemoved = nBaddiesRemoved + 1
+                nBaddiesRemoved += 1
 
-        # Check if it's time to add a new Baddie
-        self.nFramesTilNextBaddie = self.nFramesTilNextBaddie - 1
-        if self.nFramesTilNextBaddie == 0:
-            oBaddie = Baddie(self.window)
-            self.baddiesList.append(oBaddie)
-            self.nFramesTilNextBaddie = BaddieMgr.ADD_NEW_BADDIE_RATE
+        if scale > 0:
+            self.nFramesTilNextBaddie -= 1
+            if self.nFramesTilNextBaddie <= 0:
+                oBaddie = Baddie(self.window)
+                self.baddiesList.append(oBaddie)
+                self.nFramesTilNextBaddie = BaddieMgr.ADD_NEW_BADDIE_RATE
 
-        # Return that count of Baddies that were removed
         return nBaddiesRemoved
 
     def draw(self):

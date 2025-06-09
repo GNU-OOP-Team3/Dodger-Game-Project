@@ -1,11 +1,11 @@
 {
     "sound": {
         "background": {
-            "volume": 59,
-            "playing": 0
+            "volume": 100,
+            "playing": false
         },
         "effects": {
-            "volume": 30
+            "volume": 100
         }
     }
 }

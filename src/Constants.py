@@ -25,7 +25,6 @@ BLACK = (0, 0, 0)
 POINTS_FOR_GOODIE = 25
 POINTS_FOR_BADDIE_EVADED = 1
 HIGH_SCORES_DATA = 'high scores data'
-
 N_HIGH_SCORES = 10
 
 SETTING_DATA = 'setting data'
