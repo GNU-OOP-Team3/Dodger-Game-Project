@@ -4,9 +4,12 @@
 import pygame
 import pygwidgets
 import pyghelpers
+import json
+import os
 
 from .objects import *
 from src.Constants import *
+from src.settings.SettingData import *
 
 def showCustomYesNoDialog(theWindow, theText):
     oDialogBackground = pygwidgets.Image(theWindow, (40, 250),
@@ -44,7 +47,13 @@ class ScenePlay(pyghelpers.Scene):
 
     def __init__(self, window):
         self.window = window
+        self.oSettingData = SettingData()
+        
+        # Initialize mixer first
+        pygame.mixer.init()
+        pygame.mixer.set_num_channels(8)  # Ensure enough channels for all sounds
 
+        # UI Elements
         self.controlsBackground = pygwidgets.Image(self.window,
                                         (0, GAME_HEIGHT),
                                         f'{RESOURCES_PATH}/images/controlsBackground.jpg')
@@ -74,12 +83,9 @@ class ScenePlay(pyghelpers.Scene):
                                         disabled=f'{stn_PATH}/startNewDisabled.png',
                                         enterToActivate=True)
 
-        # Sound Resources PATH
-        snd_PATH = f"{RESOURCES_PATH}/sounds"
-        self.soundCheckBox = pygwidgets.TextCheckBox(self.window,
+        self.settingButton = pygwidgets.CustomButton(self.window,
                                         (430, GAME_HEIGHT + 17),
-                                        'Background music',
-                                        True, textColor=WHITE)
+                                        up=f'{RESOURCES_PATH}/images/setting.png')
 
         self.gameOverImage = pygwidgets.Image(self.window, (140, 180),
                                         f'{RESOURCES_PATH}/images/gameOver.png')
@@ -98,11 +104,24 @@ class ScenePlay(pyghelpers.Scene):
                                         (270, GAME_HEIGHT + 47), '',
                                         fontSize=36, textColor=WHITE,
                                         justified='right')
-
-        pygame.mixer.music.load(f'{snd_PATH}/background.mid')
-        self.dingSound = pygame.mixer.Sound(f'{snd_PATH}/ding.wav')
-        self.gameOverSound = pygame.mixer.Sound(f'{snd_PATH}/gameover.wav')
-
+        
+        # Load sounds
+        try:
+            # Sound Resources PATH
+            snd_PATH = f"{RESOURCES_PATH}/sounds"
+            
+            # Background music
+            pygame.mixer.music.load(f'{snd_PATH}/background.mid')
+            
+            # Sound effects
+            self.dingSound = pygame.mixer.Sound(f'{snd_PATH}/ding.wav')
+            self.gameOverSound = pygame.mixer.Sound(f'{snd_PATH}/gameover.wav')
+            
+        except Exception as e:
+            print(f"Error loading sounds: {e}")
+            self.dingSound = None
+            self.gameOverSound = None
+        
         # Instantiate objects
         self.oPlayer = Player(self.window)
         self.oBaddieMgr = BaddieMgr(self.window)
@@ -110,20 +129,55 @@ class ScenePlay(pyghelpers.Scene):
 
         self.highestHighScore = 0
         self.lowestHighScore = 0
-        self.backgroundMusic = True
         self.score = 0
         self.playingState = STATE_WAITING
 
     def getSceneKey(self):
         return SCENE_PLAY
 
+    def updateSoundVolumes(self):
+        try:
+            settings = self.oSettingData.getSetting()
+            
+            # Convert to float for pygame (0.0-1.0)
+            bg_volume = settings['sound']['background']['volume'] / 100.0
+            # 이펙트 사운드 볼륨을 1.5배 증가
+            effects_volume = (settings['sound']['effects']['volume'] / 100.0) * 1.5
+            bg_playing = settings['sound']['background']['playing']
+            
+            # Set background music volume
+            pygame.mixer.music.set_volume(bg_volume)
+            
+            # Set sound effects volumes
+            self.dingSound.set_volume(effects_volume)
+            self.gameOverSound.set_volume(effects_volume)
+                
+            # Update music playback based on playing status
+            if not bg_playing:
+                pygame.mixer.music.pause()
+            else:
+                pygame.mixer.music.unpause()
+                
+        except Exception as e:
+            print(f"Error updating volumes: {e}")
+
     def enter(self, data):
         self.getHiAndLowScores()
+        
+        # 먼저 현재 재생 중인 음악을 정지
+        pygame.mixer.music.stop()
+        
+        # 새로운 설정으로 소리 업데이트
+        self.updateSoundVolumes()
+        
+        # 배경음악 재생 상태에 따라 재생
+        if self.oSettingData.getSetting()['sound']['background']['playing']:
+            try:
+                pygame.mixer.music.play(-1, 0.0)
+            except Exception as e:
+                print(f"Error playing background music: {e}")
 
     def getHiAndLowScores(self):
-        # Ask the High Scores scene for a dict of  scores
-        # that looks like this:
-        #  {'highest': highestScore, 'lowest': lowestScore}
         infoDict = self.request(SCENE_HIGH_SCORES, HIGH_SCORES_DATA)
         self.highestHighScore = infoDict['highest']
         self.highScoreText.setValue(self.highestHighScore)
@@ -138,11 +192,17 @@ class ScenePlay(pyghelpers.Scene):
         self.oBaddieMgr.reset()
         self.oGoodieMgr.reset()
 
-        if self.backgroundMusic:
-            pygame.mixer.music.play(-1, 0.0)
+        self.updateSoundVolumes()
+        if self.oSettingData.getSetting()['sound']['background']['playing']:
+            try:
+                pygame.mixer.music.play(-1, 0.0)
+            except Exception as e:
+                print(f"Error playing background music: {e}")
+        else:
+            pygame.mixer.music.stop()
+
         self.newGameButton.disable()
         self.highScoresButton.disable()
-        self.soundCheckBox.disable()
         self.quitButton.disable()
         pygame.mouse.set_visible(False)
 
@@ -158,15 +218,17 @@ class ScenePlay(pyghelpers.Scene):
             if self.highScoresButton.handleEvent(event):
                 self.goToScene(SCENE_HIGH_SCORES)
 
-            if self.soundCheckBox.handleEvent(event):
-                self.backgroundMusic = self.soundCheckBox.getValue()
-
+            if self.settingButton.handleEvent(event):
+                self.goToScene(SCENE_SETTING)
+            
             if self.quitButton.handleEvent(event):
                 self.quit()
 
     def update(self):
+        self.updateSoundVolumes()
+
         if self.playingState != STATE_PLAYING:
-            return  # only update when playing
+            return  # only update game logic when playing
 
         # Move the Player to the mouse position, get back its rect
         mouseX, mouseY = pygame.mouse.get_pos()
@@ -175,13 +237,16 @@ class ScenePlay(pyghelpers.Scene):
         # Tell the GoodieMgr to move all Goodies
         # Returns the number of Goodies that the Player contacted
         nGoodiesHit = self.oGoodieMgr.update(playerRect)
-        if nGoodiesHit > 0:
-            self.dingSound.play()
+        if nGoodiesHit > 0 and self.dingSound:
+            try:
+                self.dingSound.play()
+            except Exception as e:
+                print(f"Error playing ding sound: {e}")
             self.score = self.score + (nGoodiesHit * POINTS_FOR_GOODIE)
 
         # Tell the BaddieMgr to move all the Baddies
         # Returns the number of Baddies that fell off the bottom
-        nBaddiesEvaded  = self.oBaddieMgr.update()
+        nBaddiesEvaded = self.oBaddieMgr.update()
         self.score = self.score + (nBaddiesEvaded * POINTS_FOR_BADDIE_EVADED)
         
         self.scoreText.setValue(self.score)
@@ -191,7 +256,11 @@ class ScenePlay(pyghelpers.Scene):
             pygame.mouse.set_visible(True)
             pygame.mixer.music.stop()
 
-            self.gameOverSound.play()
+            if self.gameOverSound:
+                try:
+                    self.gameOverSound.play()
+                except Exception as e:
+                    print(f"Error playing game over sound: {e}")
             self.playingState = STATE_GAME_OVER
             self.draw()  # force drawing of game over message
 
@@ -210,7 +279,6 @@ class ScenePlay(pyghelpers.Scene):
 
             self.newGameButton.enable()
             self.highScoresButton.enable()
-            self.soundCheckBox.enable()
             self.quitButton.enable()
     
     def draw(self):
@@ -228,7 +296,7 @@ class ScenePlay(pyghelpers.Scene):
         self.titleText.draw()
         self.scoreText.draw()
         self.highScoreText.draw()
-        self.soundCheckBox.draw()
+        self.settingButton.draw()
         self.quitButton.draw()
         self.highScoresButton.draw()
         self.newGameButton.draw()
