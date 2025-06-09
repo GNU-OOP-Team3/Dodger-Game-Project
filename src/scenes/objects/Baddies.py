@@ -3,7 +3,7 @@
 import pygame
 import pygwidgets
 import random
-from Constants import *
+from src.Constants import *
 
 # Baddie class
 class Baddie():
@@ -12,7 +12,7 @@ class Baddie():
     MIN_SPEED = 1
     MAX_SPEED = 8
     # Load the image only once
-    BADDIE_IMAGE = pygame.image.load('images/baddie.png')
+    BADDIE_IMAGE = pygame.image.load(f'{RESOURCES_PATH}/images/baddie.png')
 
     def __init__(self, window):
         self.window = window

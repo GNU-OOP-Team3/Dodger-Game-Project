@@ -1,35 +1,38 @@
 # Splash scene - first scene the user sees
 import pygwidgets
 import pyghelpers
-from ..Constants import *
+from src.Constants import *
 
 class SceneSplash(pyghelpers.Scene):
     def __init__(self, window):
         self.window = window
 
         self.backgroundImage = pygwidgets.Image(self.window,
-                                                (0, 0), 'images/splashBackground.jpg')
+                                                (0, 0), f'{RESOURCES_PATH}/images/splashBackground.jpg')
         self.dodgerImage = pygwidgets.Image(self.window,
-                                                (150, 30), 'images/dodger.png')
-        
+                                                (150, 30), f'{RESOURCES_PATH}/images/dodger.png')
+
+        st_PATH = f"{RESOURCES_PATH}/images/start"
         self.startButton = pygwidgets.CustomButton(self.window, (250, 500),
-                                                up='images/startNormal.png',
-                                                down='images/startDown.png',
-                                                over='images/startOver.png',
-                                                disabled='images/startDisabled.png',
+                                                up=f'{st_PATH}/startNormal.png',
+                                                down=f'{st_PATH}/startDown.png',
+                                                over=f'{st_PATH}/startOver.png',
+                                                disabled=f'{st_PATH}/startDisabled.png',
                                                 enterToActivate=True)
 
+        qt_PATH = f"{RESOURCES_PATH}/images/quit"
         self.quitButton = pygwidgets.CustomButton(self.window, (30, 650),
-                                                up='images/quitNormal.png',
-                                                down='images/quitDown.png',
-                                                over='images/quitOver.png',
-                                                disabled='images/quitDisabled.png')
+                                                up=f'{qt_PATH}/quitNormal.png',
+                                                down=f'{qt_PATH}/quitDown.png',
+                                                over=f'{qt_PATH}/quitOver.png',
+                                                disabled=f'{qt_PATH}/quitDisabled.png')
 
+        gth_PATH = f"{RESOURCES_PATH}/images/gotoHighScores"
         self.highScoresButton = pygwidgets.CustomButton(self.window, (360, 650),
-                                                up='images/gotoHighScoresNormal.png',
-                                                down='images/gotoHighScoresDown.png',
-                                                over='images/gotoHighScoresOver.png',
-                                                disabled='images/gotoHighScoresDisabled.png')
+                                                up=f'{gth_PATH}/gotoHighScoresNormal.png',
+                                                down=f'{gth_PATH}/gotoHighScoresDown.png',
+                                                over=f'{gth_PATH}/gotoHighScoresOver.png',
+                                                disabled=f'{gth_PATH}/gotoHighScoresDisabled.png')
 
     def getSceneKey(self):
         return SCENE_SPLASH

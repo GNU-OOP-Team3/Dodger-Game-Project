@@ -1,4 +1,10 @@
 # Constants - used by multiple Python files
+import os
+
+# PATH
+# ROOT Directory
+ROOT_PATH = os.path.dirname(os.path.dirname(__file__))
+RESOURCES_PATH = os.path.join(ROOT_PATH, 'resources')
 
 WINDOW_WIDTH = 600
 WINDOW_HEIGHT = 700
@@ -18,3 +24,4 @@ POINTS_FOR_GOODIE = 25
 POINTS_FOR_BADDIE_EVADED = 1
 HIGH_SCORES_DATA = 'high scores data'
 N_HIGH_SCORES = 10
+
