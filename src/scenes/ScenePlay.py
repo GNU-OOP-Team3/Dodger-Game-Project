@@ -6,26 +6,28 @@ import pygwidgets
 import pyghelpers
 
 from .objects import *
-from ..Constants import *
+from src.Constants import *
 
 def showCustomYesNoDialog(theWindow, theText):
     oDialogBackground = pygwidgets.Image(theWindow, (40, 250),
-                                            'images/dialog.png')
+                                            f'{RESOURCES_PATH}/images/dialog.png')
     oPromptDisplayText = pygwidgets.DisplayText(theWindow, (0, 290),
                                             theText, width=WINDOW_WIDTH,
                                             justified='center', fontSize=36)
 
+    gth_PATH = f"{RESOURCES_PATH}/images/gotoHighScores"
     oYesButton = pygwidgets.CustomButton(theWindow, (320, 370),
-                                            'images/gotoHighScoresNormal.png',
-                                            over='images/gotoHighScoresOver.png',
-                                            down='images/gotoHighScoresDown.png',
-                                            disabled='images/gotoHighScoresDisabled.png')
+                                            f'{gth_PATH}/gotoHighScoresNormal.png',
+                                            over=f'{gth_PATH}/gotoHighScoresOver.png',
+                                            down=f'{gth_PATH}/gotoHighScoresDown.png',
+                                            disabled=f'{gth_PATH}/gotoHighScoresDisabled.png')
 
+    nt_PATH = f"{RESOURCES_PATH}/images/noThanks"
     oNoButton = pygwidgets.CustomButton(theWindow, (62, 370),
-                                            'images/noThanksNormal.png',
-                                            over='images/noThanksOver.png',
-                                            down='images/noThanksDown.png',
-                                            disabled='images/noThanksDisabled.png')
+                                            f'{nt_PATH}/noThanksNormal.png',
+                                            over=f'{nt_PATH}/noThanksOver.png',
+                                            down=f'{nt_PATH}/noThanksDown.png',
+                                            disabled=f'{nt_PATH}/noThanksDisabled.png')
 
     choiceAsBoolean = pyghelpers.customYesNoDialog(theWindow,
                                             oDialogBackground, oPromptDisplayText,
@@ -45,37 +47,42 @@ class ScenePlay(pyghelpers.Scene):
 
         self.controlsBackground = pygwidgets.Image(self.window,
                                         (0, GAME_HEIGHT),
-                                        'images/controlsBackground.jpg')
+                                        f'{RESOURCES_PATH}/images/controlsBackground.jpg')
 
+        qt_PATH = f"{RESOURCES_PATH}/images/quit"
         self.quitButton = pygwidgets.CustomButton(self.window,
                                         (30, GAME_HEIGHT + 90),
-                                        up='images/quitNormal.png',
-                                        down='images/quitDown.png',
-                                        over='images/quitOver.png',
-                                        disabled='images/quitDisabled.png')
+                                        up=f'{qt_PATH}/quitNormal.png',
+                                        down=f'{qt_PATH}/quitDown.png',
+                                        over=f'{qt_PATH}/quitOver.png',
+                                        disabled=f'{qt_PATH}/quitDisabled.png')
 
+        gth_PATH = f"{RESOURCES_PATH}/images/gotoHighScores"
         self.highScoresButton = pygwidgets.CustomButton(self.window,
                                         (190, GAME_HEIGHT + 90),
-                                        up='images/gotoHighScoresNormal.png',
-                                        down='images/gotoHighScoresDown.png',
-                                        over='images/gotoHighScoresOver.png',
-                                        disabled='images/gotoHighScoresDisabled.png')
+                                        up=f'{gth_PATH}/gotoHighScoresNormal.png',
+                                        down=f'{gth_PATH}/gotoHighScoresDown.png',
+                                        over=f'{gth_PATH}/gotoHighScoresOver.png',
+                                        disabled=f'{gth_PATH}/gotoHighScoresDisabled.png')
 
+        stn_PATH = f"{RESOURCES_PATH}/images/startNew"
         self.newGameButton = pygwidgets.CustomButton(self.window,
                                         (450, GAME_HEIGHT + 90),
-                                        up='images/startNewNormal.png',
-                                        down='images/startNewDown.png',
-                                        over='images/startNewOver.png',
-                                        disabled='images/startNewDisabled.png',
+                                        up=f'{stn_PATH}/startNewNormal.png',
+                                        down=f'{stn_PATH}/startNewDown.png',
+                                        over=f'{stn_PATH}/startNewOver.png',
+                                        disabled=f'{stn_PATH}/startNewDisabled.png',
                                         enterToActivate=True)
 
+        # Sound Resources PATH
+        snd_PATH = f"{RESOURCES_PATH}/sounds"
         self.soundCheckBox = pygwidgets.TextCheckBox(self.window,
                                         (430, GAME_HEIGHT + 17),
                                         'Background music',
                                         True, textColor=WHITE)
 
         self.gameOverImage = pygwidgets.Image(self.window, (140, 180),
-                                        'images/gameOver.png')
+                                        f'{RESOURCES_PATH}/images/gameOver.png')
 
         self.titleText = pygwidgets.DisplayText(self.window,
                                         (70, GAME_HEIGHT + 17),
@@ -92,9 +99,9 @@ class ScenePlay(pyghelpers.Scene):
                                         fontSize=36, textColor=WHITE,
                                         justified='right')
 
-        pygame.mixer.music.load('sounds/background.mid')
-        self.dingSound = pygame.mixer.Sound('sounds/ding.wav')
-        self.gameOverSound = pygame.mixer.Sound('sounds/gameover.wav')
+        pygame.mixer.music.load(f'{snd_PATH}/background.mid')
+        self.dingSound = pygame.mixer.Sound(f'{snd_PATH}/ding.wav')
+        self.gameOverSound = pygame.mixer.Sound(f'{snd_PATH}/gameover.wav')
 
         # Instantiate objects
         self.oPlayer = Player(self.window)
@@ -199,7 +206,7 @@ class ScenePlay(pyghelpers.Scene):
 
                 result = showCustomYesNoDialog(self.window, dialogText)
                 if result: # navigate
-                    self.goToScene(SCENE_HIGH_SCORES, self.score)  
+                    self.goToScene(SCENE_HIGH_SCORES, self.score)
 
             self.newGameButton.enable()
             self.highScoresButton.enable()

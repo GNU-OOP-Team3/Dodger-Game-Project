@@ -2,7 +2,7 @@
 import pygame
 import pygwidgets
 import random
-from Constants import *
+from src.Constants import *
 
 class Goodie():
     MIN_SIZE = 10
@@ -10,7 +10,7 @@ class Goodie():
     MIN_SPEED = 1
     MAX_SPEED = 8
     # Load the image once
-    GOODIE_IMAGE = pygame.image.load('images/goodie.png')
+    GOODIE_IMAGE = pygame.image.load(f'{RESOURCES_PATH}/images/goodie.png')
     RIGHT = 'right'
     LEFT = 'left'
 

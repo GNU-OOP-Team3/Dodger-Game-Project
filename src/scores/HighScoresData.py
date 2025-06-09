@@ -1,5 +1,5 @@
 # HighScoresData class
-from ..Constants import *
+from src.Constants import *
 from pathlib import Path
 import json
 
@@ -12,7 +12,7 @@ class HighScoresData():
     """
     def __init__(self):
         self.BLANK_SCORES_LIST = N_HIGH_SCORES * [['-----', 0]]
-        self.oFilePath = Path('HighScores.json')
+        self.oFilePath = Path('src/scores/HighScores.json')
 
         # Try to open and load the data from the data file
         try:

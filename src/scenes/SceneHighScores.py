@@ -5,22 +5,29 @@ from src.scores.HighScoresData import *
 
 def showCustomAnswerDialog(theWindow, theText):
     oDialogBackground = pygwidgets.Image(theWindow, (35, 450),
-                                                'images/dialog.png')
+                                                f'{RESOURCES_PATH}/images/dialog.png')
+    
     oPromptDisplayText = pygwidgets.DisplayText(theWindow, (0, 480),
                                                 theText, width=WINDOW_WIDTH,
                                                 justified='center', fontSize=36)
+    
     oUserInputText = pygwidgets.InputText(theWindow, (200, 550), '',
                                                 fontSize=36, initialFocus=True)
+    
+    nt_PATH = f"{RESOURCES_PATH}/images/noThanks"
     oNoButton = pygwidgets.CustomButton(theWindow, (65, 595),
-                                                'images/noThanksNormal.png',
-                                                over='images/noThanksOver.png',
-                                                down='images/noThanksDown.png',
-                                                disabled='images/noThanksDisabled.png')
+                                                f'{nt_PATH}/noThanksNormal.png',
+                                                over=f'{nt_PATH}/noThanksOver.png',
+                                                down=f'{nt_PATH}/noThanksDown.png',
+                                                disabled=f'{nt_PATH}/noThanksDisabled.png')
+    
+    ad_PATH = f"{RESOURCES_PATH}/images/add"
     oYesButton = pygwidgets.CustomButton(theWindow, (330, 595),
-                                                'images/addNormal.png',
-                                                over='images/addOver.png',
-                                                down='images/addDown.png',
-                                                disabled='images/addDisabled.png')
+                                                f'{ad_PATH}/addNormal.png',
+                                                over=f'{ad_PATH}/addOver.png',
+                                                down=f'{ad_PATH}/addDown.png',
+                                                disabled=f'{ad_PATH}/addDisabled.png')
+    
     userAnswer = pyghelpers.customAnswerDialog(theWindow,
                                                 oDialogBackground,
                                                 oPromptDisplayText, oUserInputText,
@@ -29,20 +36,26 @@ def showCustomAnswerDialog(theWindow, theText):
 
 def showCustomResetDialog(theWindow, theText):
     oDialogBackground = pygwidgets.Image(theWindow,
-                                               (35, 450), 'images/dialog.png')
+                                               (35, 450), f'{RESOURCES_PATH}/images/dialog.png')
+    
     oPromptDisplayText = pygwidgets.DisplayText(theWindow, (0, 480),
                                                 theText, width=WINDOW_WIDTH,
                                                 justified='center', fontSize=36)
+    
+    cn_PATH = f"{RESOURCES_PATH}/images/cancel"
     oNoButton = pygwidgets.CustomButton(theWindow, (65, 595),
-                                                'images/cancelNormal.png',
-                                                over='images/cancelOver.png',
-                                                down='images/cancelDown.png',
-                                                disabled='images/cancelDisabled.png')
+                                                f'{cn_PATH}/cancelNormal.png',
+                                                over=f'{cn_PATH}/cancelOver.png',
+                                                down=f'{cn_PATH}/cancelDown.png',
+                                                disabled=f'{cn_PATH}/cancelDisabled.png')
+    
+    ok_PATH = f"{RESOURCES_PATH}/images/ok"
     oYesButton = pygwidgets.CustomButton(theWindow, (330, 595),
-                                                'images/okNormal.png',
-                                                over='images/okOver.png',
-                                                down='images/okDown.png',
-                                                disabled='images/okDisabled.png')
+                                                f'{ok_PATH}/okNormal.png',
+                                                over=f'{ok_PATH}/okOver.png',
+                                                down=f'{ok_PATH}/okDown.png',
+                                                disabled=f'{ok_PATH}/okDisabled.png')
+    
     choiceAsBoolean = pyghelpers.customYesNoDialog(theWindow,
                                                 oDialogBackground, oPromptDisplayText,
                                                 oYesButton, oNoButton)
@@ -56,7 +69,7 @@ class SceneHighScores(pyghelpers.Scene):
         
         self.backgroundImage = pygwidgets.Image(self.window,
                                                 (0, 0),
-                                                'images/highScoresBackground.jpg')
+                                                f'{RESOURCES_PATH}/images/highScoresBackground.jpg')
 
         self.namesField = pygwidgets.DisplayText(self.window, (260, 84), '',
                                                    fontSize=48, textColor=BLACK,
@@ -66,26 +79,29 @@ class SceneHighScores(pyghelpers.Scene):
                                                   textColor=BLACK,
                                                   width=175, justified='right')
 
+        qt_PATH = f"{RESOURCES_PATH}/images/quit"
         self.quitButton = pygwidgets.CustomButton(self.window,
                                                   (30, 650),
-                                                  up='images/quitNormal.png',
-                                                  down='images/quitDown.png',
-                                                  over='images/quitOver.png',
-                                                  disabled='images/quitDisabled.png')
+                                                  up=f'{qt_PATH}/quitNormal.png',
+                                                  down=f'{qt_PATH}/quitDown.png',
+                                                  over=f'{qt_PATH}/quitOver.png',
+                                                  disabled=f'{qt_PATH}/quitDisabled.png')
 
+        bk_PATH = f"{RESOURCES_PATH}/images/back"
         self.backButton = pygwidgets.CustomButton(self.window,
                                                  (240, 650),
-                                                 up='images/backNormal.png',
-                                                 down='images/backDown.png',
-                                                 over='images/backOver.png',
-                                                 disabled='images/backDisabled.png')
+                                                 up=f'{bk_PATH}/backNormal.png',
+                                                 down=f'{bk_PATH}/backDown.png',
+                                                 over=f'{bk_PATH}/backOver.png',
+                                                 disabled=f'{bk_PATH}/backDisabled.png')
 
+        rs_PATH = f"{RESOURCES_PATH}/images/reset"
         self.resetScoresButton = pygwidgets.CustomButton(self.window,
                                                  (450, 650),
-                                                 up='images/resetNormal.png',
-                                                 down='images/resetDown.png',
-                                                 over='images/resetOver.png',
-                                                 disabled='images/resetDisabled.png')
+                                                 up=f'{rs_PATH}/resetNormal.png',
+                                                 down=f'{rs_PATH}/resetDown.png',
+                                                 over=f'{rs_PATH}/resetOver.png',
+                                                 disabled=f'{rs_PATH}/resetDisabled.png')
 
         self.showHighScores()
 
