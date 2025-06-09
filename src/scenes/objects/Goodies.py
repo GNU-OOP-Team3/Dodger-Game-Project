@@ -1,62 +1,23 @@
-# Goodie and GoddieMgr classes
+# Goodie and GoodieMgr classes
 import pygame
 import pygwidgets
 import random
 from src.Constants import *
+from .PowerUps import PowerUp  # 상속을 위한 import
 
-class Goodie():
-    MIN_SIZE = 10
-    MAX_SIZE = 40
-    MIN_SPEED = 1
-    MAX_SPEED = 8
-    # Load the image once
-    GOODIE_IMAGE = pygame.image.load(f'{RESOURCES_PATH}/images/goodie.png')
-    RIGHT = 'right'
-    LEFT = 'left'
+class Goodie(PowerUp):
+    IMAGE_FILE = f'{RESOURCES_PATH}/images/aGrade.png'
+    TYPE = 'score'
+    DURATION = 0  # 지속효과 없음
 
     def __init__(self, window):
-        self.window = window
-        size = random.randrange(Goodie.MIN_SIZE, Goodie.MAX_SIZE + 1)
-        self.y = random.randrange(0, GAME_HEIGHT - size)
+        super().__init__(window)  # PowerUp에서 공통 초기화 수행
+        # Goodie 전용 속성 정의 필요 시 여기에 추가 가능
 
-        self.direction = random.choice([Goodie.LEFT, Goodie.RIGHT])
-        if self.direction == Goodie.LEFT:  # start on right side of the window
-            self.x = WINDOW_WIDTH
-            self.speed = - random.randrange(Goodie.MIN_SPEED,
-                                                            Goodie.MAX_SPEED + 1)
-            self.minLeft = - size
-        else:  # start on left side of the window
-            self.x = 0 - size
-            self.speed = random.randrange(Goodie.MIN_SPEED,
-                                                          Goodie.MAX_SPEED + 1)
+    def apply_effect(self, scenePlay):
+        pass  # 점수는 ScenePlay 쪽에서 처리
 
-        self.image = pygwidgets.Image(self.window,
-                                                     (self.x, self.y), Goodie.GOODIE_IMAGE)
-        percent = int((size * 100) / Goodie.MAX_SIZE)
-        self.image.scale(percent, False)
-
-    def update(self):
-        self.x = self.x + self.speed
-        self.image.setLoc((self.x, self.y))
-        if self.direction == Goodie.LEFT:
-            if self.x < self.minLeft:
-                return True  # needs to be deleted
-            else:
-                return False  # stays in window
-        else:
-            if self.x > WINDOW_WIDTH:
-                return True  # needs to be deleted
-            else:
-                return False  # stays in window
-
-    def draw(self):
-        self.image.draw()
-
-    def collide(self, playerRect):
-        collidedWithPlayer = self.image.overlaps(playerRect)
-        return collidedWithPlayer
-
-
+# 기존 GoodieMgr 유지
 class GoodieMgr():
     GOODIE_RATE_LO = 90
     GOODIE_RATE_HI = 111
@@ -70,31 +31,25 @@ class GoodieMgr():
         self.nFramesTilNextGoodie = GoodieMgr.GOODIE_RATE_HI
 
     def update(self, thePlayerRect):
-        # Tell each Goodie to update itself.
-        # If a Goodie goes off an edge, remove it
-        # Count up all Goodies that contact the player and remove them.
         nGoodiesHit = 0
         goodiesListCopy = self.goodiesList.copy()
         for oGoodie in goodiesListCopy:
             deleteMe = oGoodie.update()
             if deleteMe:
-                self.goodiesList.remove(oGoodie)  # remove this Goodie
-
+                self.goodiesList.remove(oGoodie)
             elif oGoodie.collide(thePlayerRect):
-                self.goodiesList.remove(oGoodie)  # remove this Goodie
-                nGoodiesHit = nGoodiesHit + 1
-        
-        # If the correct amount of frames have passed,
-        # add a new Goodie (and reset the counter)
-        self.nFramesTilNextGoodie = self.nFramesTilNextGoodie - 1
+                self.goodiesList.remove(oGoodie)
+                nGoodiesHit += 1
+
+        self.nFramesTilNextGoodie -= 1
         if self.nFramesTilNextGoodie == 0:
             oGoodie = Goodie(self.window)
             self.goodiesList.append(oGoodie)
             self.nFramesTilNextGoodie = random.randrange(
-                                                            GoodieMgr.GOODIE_RATE_LO,
-                                                            GoodieMgr.GOODIE_RATE_HI)
+                GoodieMgr.GOODIE_RATE_LO,
+                GoodieMgr.GOODIE_RATE_HI)
 
-        return nGoodiesHit  # return number of Goodies that contacted player
+        return nGoodiesHit
 
     def draw(self):
         for oGoodie in self.goodiesList:

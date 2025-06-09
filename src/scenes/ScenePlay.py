@@ -4,8 +4,7 @@
 import pygame
 import pygwidgets
 import pyghelpers
-import json
-import os
+import random
 
 from .objects import *
 from src.Constants import *
@@ -42,6 +41,49 @@ BOTTOM_RECT = (0, GAME_HEIGHT + 1, WINDOW_WIDTH,
 STATE_WAITING = 'waiting'
 STATE_PLAYING = 'playing'
 STATE_GAME_OVER = 'game over'
+
+# 추가: 파워업 매니저
+class PowerUpMgr():
+    POWERUP_RATE_LO = 90
+    POWERUP_RATE_HI = 120
+
+    def __init__(self, window):
+        self.window = window
+        self.reset()
+
+    def reset(self):
+        self.powerUps = []
+        self.nFramesTilNext = PowerUpMgr.POWERUP_RATE_HI
+
+    def update(self, thePlayerRect, scenePlay):
+        collected = 0
+        powerUpsCopy = self.powerUps.copy()
+        for item in powerUpsCopy:
+            deleteMe = item.update()
+            if deleteMe:
+                self.powerUps.remove(item)
+            elif item.collide(thePlayerRect):
+                item.apply_effect(scenePlay)  # 모든 효과 내부에서 처리
+                scenePlay.dingSound.play()
+                self.powerUps.remove(item)
+                collected += 1
+
+
+        self.nFramesTilNext -= 1
+        if self.nFramesTilNext <= 0:
+            self.nFramesTilNext = random.randint(self.POWERUP_RATE_LO, self.POWERUP_RATE_HI)
+            choice = random.choices(
+                [Goodie, Score2X, SlowMotion, Invincibility],
+                weights=[0.4, 0.25, 0.25, 0.1]
+            )[0]
+            newItem = choice(self.window)
+            self.powerUps.append(newItem)
+
+        return collected
+
+    def draw(self):
+        for item in self.powerUps:
+            item.draw()
 
 class ScenePlay(pyghelpers.Scene):
 
@@ -84,7 +126,7 @@ class ScenePlay(pyghelpers.Scene):
                                         enterToActivate=True)
 
         self.settingButton = pygwidgets.CustomButton(self.window,
-                                        (430, GAME_HEIGHT + 17),
+                                        (500, GAME_HEIGHT + 17),
                                         up=f'{RESOURCES_PATH}/images/setting.png')
 
         self.gameOverImage = pygwidgets.Image(self.window, (140, 180),
@@ -126,10 +168,15 @@ class ScenePlay(pyghelpers.Scene):
         self.oPlayer = Player(self.window)
         self.oBaddieMgr = BaddieMgr(self.window)
         self.oGoodieMgr = GoodieMgr(self.window)
+        self.oPowerUpMgr = PowerUpMgr(self.window)  # 추가됨
 
         self.highestHighScore = 0
         self.lowestHighScore = 0
         self.score = 0
+        self.scoreMultiplier = 1
+        self.invincible = False
+        self.slowFactor = 1.0
+        self.activeTimers = []
         self.playingState = STATE_WAITING
 
     def getSceneKey(self):
@@ -191,6 +238,12 @@ class ScenePlay(pyghelpers.Scene):
         # Tell the managers to reset themselves
         self.oBaddieMgr.reset()
         self.oGoodieMgr.reset()
+        self.oPowerUpMgr.reset()  # 추가됨
+
+        self.scoreMultiplier = 1
+        self.invincible = False
+        self.slowFactor = 1.0
+        self.activeTimers = []
 
         self.updateSoundVolumes()
         if self.oSettingData.getSetting()['sound']['background']['playing']:
@@ -225,60 +278,76 @@ class ScenePlay(pyghelpers.Scene):
                 self.quit()
 
     def update(self):
+
         self.updateSoundVolumes()
 
-        if self.playingState != STATE_PLAYING:
-            return  # only update game logic when playing
+        # 타이머 처리
+        self.activeTimers = [(key, frames - 1) for key, frames in self.activeTimers]
+        expired = [key for key, frames in self.activeTimers if frames <= 0]
+        self.activeTimers = [(key, frames) for key, frames in self.activeTimers if frames > 0]
 
-        # Move the Player to the mouse position, get back its rect
+        if 'scoreMultiplier' in expired:
+            self.scoreMultiplier = 1
+        if 'invincible' in expired:
+            self.invincible = False
+        if 'slow' in expired:
+            self.slowFactor = 1.0
+
+
+        if self.playingState != STATE_PLAYING:
+            return
+
         mouseX, mouseY = pygame.mouse.get_pos()
         playerRect = self.oPlayer.update(mouseX, mouseY)
 
-        # Tell the GoodieMgr to move all Goodies
-        # Returns the number of Goodies that the Player contacted
+        # Goodies (기존 기능)
         nGoodiesHit = self.oGoodieMgr.update(playerRect)
-        if nGoodiesHit > 0 and self.dingSound:
-            try:
-                self.dingSound.play()
-            except Exception as e:
-                print(f"Error playing ding sound: {e}")
-            self.score = self.score + (nGoodiesHit * POINTS_FOR_GOODIE)
+        if nGoodiesHit > 0:
+            self.dingSound.play()
+            self.score += nGoodiesHit * POINTS_FOR_GOODIE * self.scoreMultiplier
 
-        # Tell the BaddieMgr to move all the Baddies
-        # Returns the number of Baddies that fell off the bottom
-        nBaddiesEvaded = self.oBaddieMgr.update()
-        self.score = self.score + (nBaddiesEvaded * POINTS_FOR_BADDIE_EVADED)
-        
+        # PowerUps (추가 기능)
+        self.oPowerUpMgr.update(playerRect, self)
+
+        # Baddies
+        scale = 0.0 if self.slowFactor == 0 else 1.0
+        nBaddiesEvaded = self.oBaddieMgr.update(scale)
+        self.score += nBaddiesEvaded * POINTS_FOR_BADDIE_EVADED
         self.scoreText.setValue(self.score)
 
-        # Check if the Player has hit any Baddie
-        if self.oBaddieMgr.hasPlayerHitBaddie(playerRect):
+        # 타이머 처리
+        self.activeTimers = [(key, frames - 1) for key, frames in self.activeTimers]
+        expired = [key for key, frames in self.activeTimers if frames <= 0]
+        self.activeTimers = [(key, frames) for key, frames in self.activeTimers if frames > 0]
+        if 'scoreMultiplier' in expired:
+            self.scoreMultiplier = 1
+        if 'invincible' in expired:
+            self.invincible = False
+        if 'slow' in expired:
+            self.slowFactor = 1.0
+
+        # 충돌 체크
+        if not self.invincible and self.oBaddieMgr.hasPlayerHitBaddie(playerRect):
             pygame.mouse.set_visible(True)
             pygame.mixer.music.stop()
-
-            if self.gameOverSound:
-                try:
-                    self.gameOverSound.play()
-                except Exception as e:
-                    print(f"Error playing game over sound: {e}")
+            self.gameOverSound.play()
             self.playingState = STATE_GAME_OVER
-            self.draw()  # force drawing of game over message
+            self.draw()
 
             if self.score > self.lowestHighScore:
                 scoreString = 'Your score: ' + str(self.score) + '\n'
                 if self.score > self.highestHighScore:
-                    dialogText = (scoreString +
-                                       'is a new high score, CONGRATULATIONS!')
+                    dialogText = scoreString + 'is a new high score, CONGRATULATIONS!'
                 else:
-                    dialogText = (scoreString +
-                                      'gets you on the high scores list.')
+                    dialogText = scoreString + 'gets you on the high scores list.'
 
                 result = showCustomYesNoDialog(self.window, dialogText)
-                if result: # navigate
+                if result:
                     self.goToScene(SCENE_HIGH_SCORES, self.score)
 
             self.newGameButton.enable()
             self.highScoresButton.enable()
+            #self.soundCheckBox.enable()
             self.quitButton.enable()
     
     def draw(self):
@@ -287,7 +356,8 @@ class ScenePlay(pyghelpers.Scene):
         # Tell the managers to draw all the Baddies and Goodies
         self.oBaddieMgr.draw()
         self.oGoodieMgr.draw()
-    
+        self.oPowerUpMgr.draw()  # 추가
+
         # Tell the Player to draw itself
         self.oPlayer.draw()
     
