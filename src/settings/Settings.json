@@ -1,7 +1,11 @@
 {
-    "background": {
-        "volume": 5,
-        "isMute": false
-    },
-    "username": "Anomarly"
+    "sound": {
+        "background": {
+            "volume": 59,
+            "playing": 0
+        },
+        "effects": {
+            "volume": 30
+        }
+    }
 }
