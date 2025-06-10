@@ -201,11 +201,11 @@ class ScenePlay(pyghelpers.Scene):
 
             self.newGameButton.enable()
             self.highScoresButton.enable()
-            self.soundCheckBox.enable()
+            self.soundCheckBox.enable() 
             self.quitButton.enable()
     
     def draw(self):
-        self.window.fill(BLACK)
+        self.window.fill(WHITE)
     
         # Tell the managers to draw all the Baddies and Goodies
         self.oBaddieMgr.draw()

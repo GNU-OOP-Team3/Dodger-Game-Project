@@ -12,7 +12,7 @@ class SceneSplash(pyghelpers.Scene):
         self.dodgerImage = pygwidgets.Image(self.window,
                                                 (150, 30), 'images/dodger.png')
 
-        self.startButton = pygwidgets.CustomButton(self.window, (200, 610),
+        self.startButton = pygwidgets.CustomButton(self.window, (200, 650),
                                                 up='images/startNormal.png',
                                                 down='images/startDown.png',
                                                 over='images/startOver.png',
