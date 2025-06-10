@@ -351,7 +351,7 @@ class ScenePlay(pyghelpers.Scene):
             self.quitButton.enable()
     
     def draw(self):
-        self.window.fill(BLACK)
+        self.window.fill(WHITE)
     
         # Tell the managers to draw all the Baddies and Goodies
         self.oBaddieMgr.draw()

@@ -53,7 +53,7 @@ class SceneSetting(pyghelpers.Scene):
         # Background Music Settings
         self.bgVolumeCaption = pygwidgets.DisplayText(window, (50, 100), 
                              f'Background Music Volume: {int(self.settings["sound"]["background"]["volume"])}',
-                             fontSize=24, width=300, justified='right')
+                             fontSize=24, width=300, justified='left')
         self.bgVolumeInput = InputNumber(window, (80, 130), 
                              str(int(self.settings["sound"]["background"]["volume"])), width=50)
         self.bgMusicCheckBox = pygwidgets.TextCheckBox(self.window,
@@ -65,7 +65,7 @@ class SceneSetting(pyghelpers.Scene):
         # Sound Effects Settings
         self.effectsVolumeCaption = pygwidgets.DisplayText(window, (50, 200), 
                              f'Sound Effects Volume: {int(self.settings["sound"]["effects"]["volume"])}',
-                             fontSize=24, width=300, justified='right')
+                             fontSize=24, width=300, justified='left')
         self.effectsVolumeInput = InputNumber(window, (80, 230), 
                              str(int(self.settings["sound"]["effects"]["volume"])), width=50)
         
